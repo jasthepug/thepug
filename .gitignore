@@ -1,0 +1,5 @@
+wp-config.php
+.idea
+.ftpquota
+.htaccess
+error_log
