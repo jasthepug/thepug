@@ -1,0 +1,24 @@
+.pg-apply-now {
+
+  > div,
+  button {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  @media (max-width: $screen-sm-max) {
+    @include center-block();
+
+    max-width: 400px;
+  }
+}
+
+.pg-bank-showcase{
+  border-top: 1px solid $gray-lighter;
+  padding: 2rem 0;
+  text-align: center;
+
+  > img {
+    margin-right: 1.5rem;
+  }
+}

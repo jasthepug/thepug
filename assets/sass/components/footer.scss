@@ -1,0 +1,39 @@
+footer {
+  background-color: $gray-dark;
+  color: $gray-lightest;
+  display: block;
+  padding: 25px 0;
+  width: 100%;
+}
+
+.pg-footer {
+  &__img {
+    max-width: 200px;
+  }
+
+  &__social {
+    margin: 0;
+    padding: 0;
+
+    > li {
+      display: inline-block;
+      font-size: 1.3rem;
+      margin: 1rem 1rem 1rem 0;
+
+      a {
+        color: $gray-lightest;
+        opacity: .8;
+        transition: opacity .1s;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  &__list {
+    font-size: .875rem;
+    line-height: 1.8;
+  }
+}
