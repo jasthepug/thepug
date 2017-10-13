@@ -35,9 +35,6 @@
                         <a class="text-lightest" href="<?php echo get_site_url(); ?>/about">About</a>
                     </li>
                     <li>
-                        <a class="text-lightest" href="<?php echo get_site_url(); ?>/explore-loans">Explore Loans</a>
-                    </li>
-                    <li>
                         <a class="text-lightest" href="<?php echo get_site_url(); ?>/faq">FAQ</a>
                     </li>
                     <li>
