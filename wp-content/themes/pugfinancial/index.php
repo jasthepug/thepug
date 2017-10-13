@@ -119,8 +119,8 @@ get_header(); ?>
                 </div>
                 <div class="mt-8 pg-apply-now">
                     <a href="<?php echo get_site_url(); ?>/find-out-more"
-                       class="btn btn-primary btn-lg btn-round pg-btn-wide-padding mr-3">Apply Now</a>
-                    <div class="mr-3">Or</div>
+                       class="btn btn-primary btn-lg btn-round pg-btn-wide-padding mr-2">Apply Now</a>
+                    <div class="mr-2">Or</div>
                     <div>
                         <h1 class="mb-1 h5">
                             <span class="text-primary inline-block vertical-align-middle big mr-1"><i
