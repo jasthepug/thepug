@@ -8,23 +8,21 @@
  */
 
 
- 
-get_header(); 
+get_header();
 
 
 ?>
 
 
- 
+<div class="row" style="min-height:100%;">
+    <div class="container">
+        <div class="col-md-offset-2 col-xs-12 col-md-8">
+            <h1 class="text-center">Find Out More</h1>
 
-	 <div class="row" style="min-height:100%;">
-	  <div class="col-lg-10 col-md-10 col-sm-12 col-md-offset-1 col-lg-offset-1 Gotham contact-box1" style="text-align:center;padding-top:15px;">  
-		  <h1 class="Contact"><span style="color:white;background-color:#98D4DC;padding:5px 30px">FIND OUT MORE</span></h1>
- 
-		<!--<?php 
+            <!--<?php
 
-			if($_POST[sent]=="apply"){
-		?>
+            if ($_POST[sent] == "apply"){
+                ?>
 		<div class="row">
 			<div class="col-lg-12 col-md-12 col-sm-12  Gotham " >
 			<img src="<?php echo get_template_directory_uri(); ?>/img/tie.gif" /><br />
@@ -97,127 +95,139 @@ get_header();
 			
 			
 		<?php
-			}else{
-		?>
+            }else{
+            ?>
 		--->
-			<div style="padding: 0px 15%">Please provide your contact details along with some information relating to your loan requirements 
-			and a home loan expert will be in touch with you soon.
-			</div>
-			 
-			<!--<form id="myform" name="myform" action="<?php the_permalink(); ?>" method="post" >-->
-			<form id="myform" name="myform" action="../form.php" method="post" >
-				<input type="hidden" name="sent" value="apply"  />
-				<input type="hidden" name="my_interest" value="<?php echo $_POST[my_loan]; ?>"  />
-				
-			<div class="row" style="margin-top:30px;line-height:1em;font-size:0.8em;" >
-			
-				<div class="col-lg-12 col-md-12 col-sm-12  Gotham cont_marg "  >
-					<input type="text" name="my_name" class="txtf_blue" placeholder="NAME*"  />
-					<div id='myform_my_name_errorloc' class="error_strings"></div>
-					<br /><br />
-					<input type="text" name="my_last_name" class="txtf_blue" placeholder="LAST NAME*"  />
-					<div id='myform_my_last_name_errorloc' class="error_strings"></div>
-					<br /><br />
-					<input type="text" name="my_email" class="txtf_blue" placeholder="EMAIL*" />
-					<div id='myform_my_email_errorloc' class="error_strings"></div>
-					<br /><br />
-					 <input type="text" name="my_phone" class="txtf_blue" placeholder="PHONE" />
-					
-					
-					<div style="padding-left:10%;text-align:left;margin-top:40px;font-size:0.9em" >Read our 
-					<a style="font-size:0.7em;text-decoration:underline;" href="<?php echo get_site_url(); ?>/privacy">PRIVACY POLICY</a> 
-					
-					<a href="<?php echo get_site_url(); ?>/security" style="margin-left:60px;" >
-					<img src="http://www.thepug.com.au/wp-content/uploads/2015/09/ssl.gif" /> </a>
-					</div>
-					
-					
-				</div>
-				<div class="col-lg-12 col-md-12 col-sm-12  Gotham " style="margin-top:40px;" >
-					
-					<div class="soft_div" >
-					
-					<!--
+            <div class="text-center text-muted mt-4">Please provide your contact details along with some information
+                relating to your
+                loan requirements and a home loan expert will be in touch with you soon.
+            </div>
+
+            <!--<form id="myform" name="myform" action="<?php the_permalink(); ?>" method="post" >-->
+            <form id="myform" class="mt-6 mb-6" name="myform" action="../form.php" method="post">
+                <input type="hidden" name="sent" value="apply"/>
+                <input type="hidden" name="my_interest" value="<?php echo $_POST[my_loan]; ?>"/>
+
+                <div class="">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input id="firstName" type="text" name="my_name" class="form-control" placeholder="Name*"/>
+                        <div id='myform_my_name_errorloc' class="small text-danger"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input id="lastName" type="text" name="my_last_name" class="form-control"
+                               placeholder="Last Name*"/>
+                        <div id='myform_my_last_name_errorloc' class="small text-danger"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailId">Email</label>
+                        <input id="emailId" type="text" name="my_email" class="form-control" placeholder="Email*"/>
+                        <div id='myform_my_email_errorloc' class="small text-danger"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Contact number</label>
+                        <input type="text" id="phone" name="my_phone" class="form-control"
+                               placeholder="Contact Number"/>
+                    </div>
+                    <div style="padding-left:10%;text-align:left;margin-top:40px;font-size:0.9em">Read our
+                        <a style="font-size:0.7em;text-decoration:underline;"
+                           href="<?php echo get_site_url(); ?>/privacy">PRIVACY POLICY</a>
+
+                        <a href="<?php echo get_site_url(); ?>/security" style="margin-left:60px;">
+                            <img src="http://www.thepug.com.au/wp-content/uploads/2015/09/ssl.gif"/> </a>
+                    </div>
+                    <div class="mt-6">
+
+                        <div class="soft_div">
+
+                            <!--
 					<div class="row" >
 					<div class="col-lg-5 col-md-5 col-sm-12  "  >	INTERESTED IN &nbsp; &nbsp;</div>
 					<div class="col-lg-7 col-md-7 col-sm-12  "  ><select name="loans" >
 						<option value=""></option>
 						<?php
-						$loop = new WP_Query( array(
-								'showposts' => 4,
-								'post_type' => array('loan'),
-								)
-								);
-								
+                            $loop = new WP_Query(array(
+                                    'showposts' => 4,
+                                    'post_type' => array('loan'),
+                                )
+                            );
 
-						while ( $loop->have_posts() ) : $loop->the_post(); ?>
-							<option value="<?php the_title();  ?>"><?php the_title();  ?></option>
 
-							  <?php	endwhile;
-						wp_reset_postdata();
-						?>
+                            while ($loop->have_posts()) : $loop->the_post(); ?>
+							<option value="<?php the_title(); ?>"><?php the_title(); ?></option>
+
+							  <?php endwhile;
+                            wp_reset_postdata();
+                            ?>
 						</select></div>
 					</div>-->
-					
-					
-					
-						<div class="row"  >
-							<div class="col-lg-5 col-md-5 col-sm-12  "  >CURRENT VALUE OF THE PROPERTY</div>
-							<div class="col-lg-7 col-md-7 col-sm-12  "  > $ <input id="rangeValue1" name="my_value" style="border:0px;"  type="text" size="9"/> &nbsp; 
-							<input type="range" id="value" onchange="printValue('value','rangeValue1')" oninput="printValue('value','rangeValue1')" max="30" step ="0.1" />
-							</div>
-						</div>
-						<div class="row" style="margin-top:40px;" >
-						
-							<div class="col-lg-5 col-md-5 col-sm-12  "  >LOAN REQUIRED </div>
-							<div class="col-lg-7 col-md-7 col-sm-12  "  >  $ <input id="rangeValue2" name="my_loan"  style="border:0px;" type="text" size="9"/> &nbsp; 
-							<input type="range" id="loan" onchange="printValue('loan','rangeValue2')" oninput="printValue('loan','rangeValue2')" max="30" step ="0.1" />
-							</div>
-							
-						</div>
-					</div>
-				</div>
-			<script>
-                function printValue(sliderID, textbox) {
-                    var x = document.getElementById(textbox);
-                    var y = document.getElementById(sliderID);
-					var mll = parseFloat(y.value);
-					mll = mll*100000;
-					mll = Math.round(mll);
-					mll = mll.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-                    x.value = mll;
-                }
-
-                window.onload = function() {printValue('value', 'rangeValue1'); printValue('loan', 'rangeValue2'); }
-            </script>
-			</div>
-			
-			<div class="row" style="margin:50px 0px;line-height:1em;font-size:0.8em;" >
-				<div class="col-lg-12 col-md-12 col-sm-12  Gotham " style="text-align:center;padding:0 8%">  
-					
-					<input type="submit" value=" GO " class="butt_blue" style="font-size:18px !important;"  />
-				</div>
-			</div>
-			</form>
-			
-			<script language="JavaScript" type="text/javascript"
-					xml:space="preserve">//<![CDATA[
-				  var frmvalidator  = new Validator("myform");
-				  frmvalidator.EnableOnPageErrorDisplay();
-				  
-				  frmvalidator.EnableMsgsTogether();
-				  frmvalidator.addValidation("my_name","req","Required Field");
-				  frmvalidator.addValidation("my_last_name","req","Required Field");
-				  frmvalidator.addValidation("my_email","req","Required Field");
-				  frmvalidator.addValidation("my_email","email" ,"Enter a valid Email address");
-				 
 
 
-				//]]></script>
-				
-			<?php } ?>
-	   </div>
-	  </div>
+                            <div class="row">
+                                <div class="col-lg-5 col-md-5 col-sm-12  ">CURRENT VALUE OF THE PROPERTY</div>
+                                <div class="col-lg-7 col-md-7 col-sm-12  "> $ <input id="rangeValue1"
+                                                                                     name="my_value"
+                                                                                     style="border:0px;" type="text"
+                                                                                     size="9"/> &nbsp;
+                                    <input type="range" id="value" onchange="printValue('value','rangeValue1')"
+                                           oninput="printValue('value','rangeValue1')" max="30" step="0.1"/>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top:40px;">
+
+                                <div class="col-lg-5 col-md-5 col-sm-12  ">LOAN REQUIRED</div>
+                                <div class="col-lg-7 col-md-7 col-sm-12  "> $ <input id="rangeValue2" name="my_loan"
+                                                                                     style="border:0px;" type="text"
+                                                                                     size="9"/> &nbsp;
+                                    <input type="range" id="loan" onchange="printValue('loan','rangeValue2')"
+                                           oninput="printValue('loan','rangeValue2')" max="30" step="0.1"/>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button class="btn btn-primary btn-lg pg-btn-wide-padding" type="submit" />Go</div>
+                    </div>
+                    <script>
+                        function printValue(sliderID, textbox) {
+                            var x = document.getElementById(textbox);
+                            var y = document.getElementById(sliderID);
+                            var mll = parseFloat(y.value);
+                            mll = mll * 100000;
+                            mll = Math.round(mll);
+                            mll = mll.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+                            x.value = mll;
+                        }
+
+                        window.onload = function () {
+                            printValue('value', 'rangeValue1');
+                            printValue('loan', 'rangeValue2');
+                        }
+                    </script>
+                </div>
+
+            </form>
+
+            <script language="JavaScript" type="text/javascript"
+                    xml:space="preserve">//<![CDATA[
+                var frmvalidator = new Validator("myform");
+                frmvalidator.EnableOnPageErrorDisplay();
+
+                frmvalidator.EnableMsgsTogether();
+                frmvalidator.addValidation("my_name", "req", "Required Field");
+                frmvalidator.addValidation("my_last_name", "req", "Required Field");
+                frmvalidator.addValidation("my_email", "req", "Required Field");
+                frmvalidator.addValidation("my_email", "email", "Enter a valid Email address");
+
+
+                //]]></script>
+
+            <?php } ?>
+        </div>
+    </div>
+</div>
 
 
 <?php get_footer(); ?>

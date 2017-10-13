@@ -21,7 +21,7 @@ Last change	: 2015/03/27
 /*=== 1. General Structure ===*/
 html,
 body {
-  padding: 10px;
+  /*padding: 10px;*/
 }
 /*=== 2. Anchor Link ===*/
 a {

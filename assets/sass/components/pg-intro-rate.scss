@@ -1,0 +1,24 @@
+.pg-intro-rate {
+  border: 1px solid $gray-lighter;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  padding: .5rem;
+  text-align: center;
+
+  &__number {
+    color: $brand-primary;
+    line-height: 1.1;
+    font-size: 2.5em;
+  }
+
+  &__text {
+    font: 1em $font-family-base;
+    margin: .3em;
+    text-transform: uppercase;
+  }
+
+  .small {
+    font-size: 45%;
+  }
+}
