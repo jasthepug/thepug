@@ -19,7 +19,7 @@ get_header(); ?>
             <img class="img-responsive" src="<?php echo get_template_directory_uri(); ?>/img/pug_med.jpg">
         </div>
         <div class="col-xs-12 col-sm-7">
-            <blockquote class="pg-intro__text">
+            <blockquote class="pg-intro__text text-muted">
                 <span id="intro-slogan"></span>
             </blockquote>
             <div class="row">
