@@ -1,0 +1,17 @@
+.pg-intro {
+  min-height: 31.250rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+
+  @media (max-width: $screen-sm-max) {
+    padding: 0 1rem 1rem;
+  }
+
+  &__text {
+    border: 0;
+    font: $font-regular 2.25rem $font-family-sans-serif;
+    margin: 0;
+    min-height: 120px;
+    line-height: 1.3;
+  }
+}

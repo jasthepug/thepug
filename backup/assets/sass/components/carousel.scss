@@ -1,0 +1,41 @@
+.carousel-control {
+  opacity: 1;
+
+  &.left {
+    background: transparent;
+  }
+
+  &.right {
+    background: transparent;
+  }
+
+  .fa {
+    position: absolute;
+    top: 50%;
+    margin-top: -10px;
+    z-index: 5;
+    display: inline-block;
+  }
+
+  .fa-chevron-left {
+    left: 15%;
+    margin-left: -10px;
+  }
+
+  .fa-chevron-right {
+    right: 15%;
+    margin-right: -10px;
+  }
+}
+
+.pg-carousel {
+  padding: 0 2rem;
+
+  @media (min-width: $screen-sm-min) {
+    max-width: 550px;
+  }
+
+  .carousel-indicators {
+    bottom: -30px;
+  }
+}

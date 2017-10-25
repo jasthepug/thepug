@@ -1,6 +1,35 @@
 <?php
 defined('ABSPATH') or die('No direct access permitted');
 
+// Adds ST terms to array if they don't exist.
+$arrSettings = wp_parse_args( $arrSettings, array(
+    'accepted_sharethis_terms' => 'N',
+    'hide_sharethis_terms' => false,
+) );
+
+// if the sharethis terms have not yet been accepted
+if (
+    'Y' !== $arrSettings['accepted_sharethis_terms'] &&
+    true !== $arrSettings['hide_sharethis_terms']
+) {
+    function sharethis_terms_notice()
+    {
+        ?>
+        <div id="sharethis_terms_notice" class="update-nag notice is-dismissible">
+            <p>There are some <strong>great new features</strong> available with Simple Share Buttons Adder 6.3, such as an improved mobile Facebook sharing experience and Facebook analytics.
+            We've updated our <a href="http://simplesharebuttons.com/privacy" target="_blank">privacy policy and terms of use</a> with important changes you should review. To take advantage of the new features, please review and accept the new <a href="http://simplesharebuttons.com/privacy" target="_blank">terms and privacy policy</a>.
+            <a href="options-general.php?page=simple-share-buttons-adder&accept-terms=Y"><span class="button button-primary">I accept</span></a></p>
+        </div>
+        <script type="text/javascript">
+        jQuery( '#sharethis_terms_notice' ).on( 'click', '.notice-dismiss', function( event ) {
+            jQuery.post( ajaxurl, { action: 'ssba_hide_terms' } );
+        });
+        </script>
+        <?php
+    }
+    add_action( 'admin_notices', 'sharethis_terms_notice' );
+    add_action( 'wp_ajax_ssba_hide_terms', 'ssba_admin_hide_callback' );
+}
 // add settings link on plugin page
 function ssba_settings_link($links) {
 
@@ -9,6 +38,12 @@ function ssba_settings_link($links) {
 
 	// return all links
 	return $links;
+}
+
+// Hides the terms agreement at user's request.
+function ssba_admin_hide_callback() {
+    ssba_update_options( array( 'hide_sharethis_terms' => true ) );
+    wp_die();
 }
 
 // include js files and upload script
@@ -65,16 +100,21 @@ if (isset($_GET['page']) && $_GET['page'] == 'simple-share-buttons-adder') {
 function ssba_menu() {
 
 	// add menu page
-	add_options_page( 'Simple Share Buttons Adder', 'Share Buttons', 'manage_options', 'simple-share-buttons-adder', 'ssba_settings');
+	add_options_page( 'Simple Share Buttons Adder', 'Simple Share Buttons', 'manage_options', 'simple-share-buttons-adder', 'ssba_settings');
 
 	// query the db for current ssba settings
 	$arrSettings = get_ssba_settings();
 
-	// check if not updated to current version
-	if ($arrSettings['ssba_version'] != SSBA_VERSION) {
+	// get the current version
+	$version = get_option('ssba_version');
 
-		// run the upgrade function
-		upgrade_ssba($arrSettings);
+	// there was a version set
+	if ($version !== false) {
+        // check if not updated to current version
+    	if ($version < SSBA_VERSION) {
+    		// run the upgrade function
+    		upgrade_ssba($arrSettings, $version);
+    	}
 	}
 }
 
@@ -96,68 +136,84 @@ function ssba_settings() {
 		parse_str($ssbaPost, $ssbaPost);
 
 		// if the nonce doesn't check out...
-		if ( ! isset($ssbaPost['ssba_save_nonce']) || ! wp_verify_nonce($ssbaPost['ssba_save_nonce'], 'ssba_save_settings'))
-		{
+		if ( ! isset($ssbaPost['ssba_save_nonce']) || ! wp_verify_nonce($ssbaPost['ssba_save_nonce'], 'ssba_save_settings')) {
 			die('There was no nonce provided, or the one provided did not verify.');
 		}
 
-		// update existing ssba settings
-		update_option('ssba_image_set', 			$ssbaPost['ssba_image_set']);
-		update_option('ssba_size', 					$ssbaPost['ssba_size']);
-		update_option('ssba_pages', 				(isset($ssbaPost['ssba_pages']) ? $ssbaPost['ssba_pages'] : NULL));
-		update_option('ssba_posts', 				(isset($ssbaPost['ssba_posts']) ? $ssbaPost['ssba_posts'] : NULL));
-		update_option('ssba_cats_archs', 			(isset($ssbaPost['ssba_cats_archs']) ? $ssbaPost['ssba_cats_archs'] : NULL));
-		update_option('ssba_homepage', 				(isset($ssbaPost['ssba_homepage']) ? $ssbaPost['ssba_homepage'] : NULL));
-		update_option('ssba_excerpts', 				(isset($ssbaPost['ssba_excerpts']) ? $ssbaPost['ssba_excerpts'] : NULL));
-		update_option('ssba_align', 				(isset($ssbaPost['ssba_align']) ? $ssbaPost['ssba_align'] : NULL));
-		update_option('ssba_padding', 				$ssbaPost['ssba_padding']);
-		update_option('ssba_before_or_after', 		$ssbaPost['ssba_before_or_after']);
-		update_option('ssba_additional_css', 		$ssbaPost['ssba_additional_css']);
-		update_option('ssba_custom_styles', 		$ssbaPost['ssba_custom_styles']);
-		update_option('ssba_custom_styles_enabled', $ssbaPost['ssba_custom_styles_enabled']);
-		update_option('ssba_email_message', 		stripslashes_deep($ssbaPost['ssba_email_message']));
-		update_option('ssba_twitter_text', 			stripslashes_deep($ssbaPost['ssba_twitter_text']));
-		update_option('ssba_buffer_text', 			stripslashes_deep($ssbaPost['ssba_buffer_text']));
-		update_option('ssba_flattr_user_id', 		stripslashes_deep($ssbaPost['ssba_flattr_user_id']));
-		update_option('ssba_flattr_url', 			stripslashes_deep($ssbaPost['ssba_flattr_url']));
-		update_option('ssba_share_new_window', 		(isset($ssbaPost['ssba_share_new_window']) ? $ssbaPost['ssba_share_new_window'] : NULL));
-		update_option('ssba_link_to_ssb', 			(isset($ssbaPost['ssba_link_to_ssb']) ? $ssbaPost['ssba_link_to_ssb'] : NULL));
-		update_option('ssba_show_share_count', 		(isset($ssbaPost['ssba_show_share_count']) ? $ssbaPost['ssba_show_share_count'] : NULL));
-		update_option('ssba_share_count_style',		$ssbaPost['ssba_share_count_style']);
-		update_option('ssba_share_count_css',		$ssbaPost['ssba_share_count_css']);
-		update_option('ssba_share_count_once',		(isset($ssbaPost['ssba_share_count_once']) ? $ssbaPost['ssba_share_count_once'] : NULL));
-		update_option('ssba_widget_text',			$ssbaPost['ssba_widget_text']);
-		update_option('ssba_rel_nofollow',			(isset($ssbaPost['ssba_rel_nofollow']) ? $ssbaPost['ssba_rel_nofollow'] : NULL));
-		update_option('ssba_default_pinterest',		(isset($ssbaPost['ssba_default_pinterest']) ? $ssbaPost['ssba_default_pinterest'] : NULL));
-		update_option('ssba_pinterest_featured',	(isset($ssbaPost['ssba_pinterest_featured']) ? $ssbaPost['ssba_pinterest_featured'] : NULL));
-		update_option('ssba_content_priority',	    (isset($ssbaPost['ssba_content_priority']) ? $ssbaPost['ssba_content_priority'] : NULL));
+        // prepare array
+        $arrOptions = array(
+            'ssba_image_set' => $ssbaPost['ssba_image_set'],
+    		'ssba_size' => $ssbaPost['ssba_size'],
+    		'ssba_pages' => (isset($ssbaPost['ssba_pages']) ? $ssbaPost['ssba_pages'] : NULL),
+    		'ssba_posts' => (isset($ssbaPost['ssba_posts']) ? $ssbaPost['ssba_posts'] : NULL),
+    		'ssba_cats_archs' => (isset($ssbaPost['ssba_cats_archs']) ? $ssbaPost['ssba_cats_archs'] : NULL),
+    		'ssba_homepage' => (isset($ssbaPost['ssba_homepage']) ? $ssbaPost['ssba_homepage'] : NULL),
+    		'ssba_excerpts' => (isset($ssbaPost['ssba_excerpts']) ? $ssbaPost['ssba_excerpts'] : NULL),
+    		'ssba_align' => (isset($ssbaPost['ssba_align']) ? $ssbaPost['ssba_align'] : NULL),
+    		'ssba_padding' => $ssbaPost['ssba_padding'],
+    		'ssba_before_or_after' => $ssbaPost['ssba_before_or_after'],
+    		'ssba_additional_css' => $ssbaPost['ssba_additional_css'],
+    		'ssba_custom_styles' => $ssbaPost['ssba_custom_styles'],
+    		'ssba_custom_styles_enabled' => $ssbaPost['ssba_custom_styles_enabled'],
+    		'ssba_email_message' => stripslashes_deep($ssbaPost['ssba_email_message']),
+    		'ssba_twitter_text' => stripslashes_deep($ssbaPost['ssba_twitter_text']),
+    		'ssba_buffer_text' => stripslashes_deep($ssbaPost['ssba_buffer_text']),
+    		'ssba_flattr_user_id' => stripslashes_deep($ssbaPost['ssba_flattr_user_id']),
+    		'ssba_flattr_url' => stripslashes_deep($ssbaPost['ssba_flattr_url']),
+    		'ssba_share_new_window' => (isset($ssbaPost['ssba_share_new_window']) ? $ssbaPost['ssba_share_new_window'] : NULL),
+    		'ssba_link_to_ssb' => (isset($ssbaPost['ssba_link_to_ssb']) ? $ssbaPost['ssba_link_to_ssb'] : NULL),
+    		'ssba_show_share_count' => (isset($ssbaPost['ssba_show_share_count']) ? $ssbaPost['ssba_show_share_count'] : NULL),
+    		'ssba_share_count_style' => $ssbaPost['ssba_share_count_style'],
+    		'ssba_share_count_css' => $ssbaPost['ssba_share_count_css'],
+    		'ssba_share_count_once' => (isset($ssbaPost['ssba_share_count_once']) ? $ssbaPost['ssba_share_count_once'] : NULL),
+    		'ssba_widget_text' => $ssbaPost['ssba_widget_text'],
+    		'ssba_rel_nofollow' => (isset($ssbaPost['ssba_rel_nofollow']) ? $ssbaPost['ssba_rel_nofollow'] : NULL),
+    		'ssba_default_pinterest' => (isset($ssbaPost['ssba_default_pinterest']) ? $ssbaPost['ssba_default_pinterest'] : NULL),
+    		'ssba_pinterest_featured' => (isset($ssbaPost['ssba_pinterest_featured']) ? $ssbaPost['ssba_pinterest_featured'] : NULL),
+    		'ssba_content_priority'  => (isset($ssbaPost['ssba_content_priority']) ? $ssbaPost['ssba_content_priority'] : NULL),
 
-		// share container
-		update_option('ssba_div_padding', 			$ssbaPost['ssba_div_padding']);
-		update_option('ssba_div_rounded_corners', 	(isset($ssbaPost['ssba_div_rounded_corners']) ? $ssbaPost['ssba_div_rounded_corners'] : NULL));
-		update_option('ssba_border_width', 			$ssbaPost['ssba_border_width']);
-		update_option('ssba_div_border', 			$ssbaPost['ssba_div_border']);
-		update_option('ssba_div_background', 		$ssbaPost['ssba_div_background']);
+    		// share container
+    		'ssba_div_padding' => $ssbaPost['ssba_div_padding'],
+    		'ssba_div_rounded_corners' => (isset($ssbaPost['ssba_div_rounded_corners']) ? $ssbaPost['ssba_div_rounded_corners'] : NULL),
+    		'ssba_border_width' => $ssbaPost['ssba_border_width'],
+    		'ssba_div_border' => $ssbaPost['ssba_div_border'],
+    		'ssba_div_background' => $ssbaPost['ssba_div_background'],
 
-		// text
-		update_option('ssba_share_text', 			stripslashes_deep($ssbaPost['ssba_share_text']));
-		update_option('ssba_text_placement', 		$ssbaPost['ssba_text_placement']);
-		update_option('ssba_font_family', 			$ssbaPost['ssba_font_family']);
-		update_option('ssba_font_color', 			$ssbaPost['ssba_font_color']);
-		update_option('ssba_font_size', 			$ssbaPost['ssba_font_size']);
-		update_option('ssba_font_weight', 			$ssbaPost['ssba_font_weight']);
+    		// text
+    		'ssba_share_text' => stripslashes_deep($ssbaPost['ssba_share_text']),
+    		'ssba_text_placement' => $ssbaPost['ssba_text_placement'],
+    		'ssba_font_family' => $ssbaPost['ssba_font_family'],
+    		'ssba_font_color' => $ssbaPost['ssba_font_color'],
+    		'ssba_font_size' => $ssbaPost['ssba_font_size'],
+    		'ssba_font_weight' => $ssbaPost['ssba_font_weight'],
 
-		// include
-		update_option('ssba_selected_buttons', 		$ssbaPost['ssba_selected_buttons']);
+    		// included buttons
+    		'ssba_selected_buttons' => $ssbaPost['ssba_selected_buttons'],
 
-		// prepare array of buttons
+            // sharedcount
+            'sharedcount_enabled' => $ssbaPost['sharedcount_enabled'],
+            'sharedcount_api_key' => $ssbaPost['sharedcount_api_key'],
+            'sharedcount_plan' => $ssbaPost['sharedcount_plan'],
+
+            // newsharecounts
+            'twitter_newsharecounts' => $ssbaPost['twitter_newsharecounts'],
+
+			// facebook
+			'facebook_insights' => $ssbaPost['facebook_insights'],
+			'facebook_app_id' => $ssbaPost['facebook_app_id'],
+        );
+
+        // prepare array of buttons
         $arrButtons = json_decode(get_option('ssba_buttons'), true);
 
         // loop through each button
         foreach ($arrButtons as $button => $arrButton) {
-            // update the option for the button
-            update_option('ssba_custom_'.$button, $ssbaPost['ssba_custom_'.$button]);
+            // add custom button to array of options
+            $arrOptions['ssba_custom_'.$button] = $ssbaPost['ssba_custom_'.$button];
         }
+
+		 // save the settings
+        ssba_update_options($arrOptions);
 
         // return success
 		return true;
