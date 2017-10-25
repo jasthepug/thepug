@@ -14,8 +14,16 @@ function ssba_format_number($intNumber)
     return $intNumber;
 }
 
-// add share buttons to content and/or excerpts
-add_filter('the_content', 'show_share_buttons', (int) $arrSettings['ssba_content_priority']);
+/**
+ * Adds a filter around the content.
+ */
+function ssba_add_button_filter() {
+    $arrSettings = get_ssba_settings();
+    add_filter( 'the_content', 'show_share_buttons', (int) $arrSettings['ssba_content_priority'] );
+}
+
+add_action( 'wp_head', 'ssba_add_button_filter', 99 );
+
 
 // get and show share buttons
 function show_share_buttons($content, $booShortCode = FALSE, $atts = '') {
@@ -25,12 +33,10 @@ function show_share_buttons($content, $booShortCode = FALSE, $atts = '') {
 
     // variables
     $htmlContent = $content;
-    $htmlShareButtons = '';
-    $strIsWhatFunction = '';
     $pattern = get_shortcode_regex();
 
     // ssba_hide shortcode is in the post content and instance is not called by shortcode ssba
-    if (preg_match_all( '/'. $pattern .'/s', $post->post_content, $matches )
+    if (isset($post->post_content) && preg_match_all( '/'. $pattern .'/s', $post->post_content, $matches )
         && array_key_exists( 2, $matches )
         && in_array('ssba_hide', $matches[2])
         && $booShortCode == FALSE) {
@@ -258,9 +264,14 @@ function get_share_buttons($arrSettings, $urlCurrentPage, $strPageTitle, $intPos
 
 // get facebook button
 function ssba_facebook($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShareCount) {
-
-    // facebook share link
-    $htmlShareButtons = '<a data-site="" class="ssba_facebook_share" href="http://www.facebook.com/sharer.php?u=' . $urlCurrentPage  . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow"' : NULL) .'>';
+    // if the sharethis terms have been accepted
+    if ($arrSettings['accepted_sharethis_terms'] == 'Y' && $arrSettings['facebook_app_id'] != '') {
+        // facebook share link
+        $htmlShareButtons = '<a data-site="" data-facebook="mobile" class="ssba_facebook_share" data-href="'.$urlCurrentPage.'" href="https://www.facebook.com/dialog/share?app_id='.$arrSettings['facebook_app_id'].'&display=popup&href='.$urlCurrentPage.'&redirect_uri='.$urlCurrentPage.'" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow"' : NULL) .'>';
+    } else {
+        // facebook share link
+        $htmlShareButtons = '<a data-site="" class="ssba_facebook_share" href="http://www.facebook.com/sharer.php?u=' . $urlCurrentPage  . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow"' : NULL) .'>';
+    }
 
     // if not using custom
     if ($arrSettings['ssba_image_set'] != 'custom') {
@@ -281,28 +292,78 @@ function ssba_facebook($arrSettings, $urlCurrentPage, $strPageTitle, $booShowSha
 
     // if show share count is set to Y
     if ($arrSettings['ssba_show_share_count'] == 'Y' && $booShowShareCount == true) {
-
-        $htmlShareButtons .= '<span class="ssba_sharecount">' . getFacebookShareCount($urlCurrentPage) . '</span>';
+        // get and add facebook share count
+        $htmlShareButtons .= '<span class="ssba_sharecount">' . getFacebookShareCount($urlCurrentPage, $arrSettings) . '</span>';
     }
 
     // return share buttons
     return $htmlShareButtons;
 }
 
-// get facebook share count
-function getFacebookShareCount($urlCurrentPage) {
-    // get results from facebook
-    $htmlFacebookShareDetails = wp_remote_get('http://graph.facebook.com/'.$urlCurrentPage, array('timeout' => 6));
+// get facebook button
+function ssba_facebook_save($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShareCount) {
+    // if the sharethis terms have been accepted
+    if ($arrSettings['accepted_sharethis_terms'] == 'Y') {
+        // add facebook save button
+        return '<div class="fb-save" style="display:inline-block" data-uri="'.$urlCurrentPage.'"></div>';
+    }
+}
 
-    // if no error
-    if (is_wp_error($htmlFacebookShareDetails)) {
-        return 0;
+// get facebook share count
+function getFacebookShareCount($urlCurrentPage, $arrSettings)
+{
+    $cache_key = sprintf(
+        'facebook_sharecount_%s',
+        wp_hash( $urlCurrentPage )
+    );
+    if ( $cachedCount = wp_cache_get( $cache_key, 'ssba' ) ) {
+        return ssba_format_number( $cachedCount );
     }
 
-    // decode and return count
-    $arrFacebookShareDetails = json_decode($htmlFacebookShareDetails['body'], true);
-    $intFacebookShareCount =  (isset($arrFacebookShareDetails['shares']) ? $arrFacebookShareDetails['shares'] : 0);
-    return ($intFacebookShareCount) ? ssba_format_number($intFacebookShareCount) : '0';
+    // Get the longer cached value from the Transient API.
+    $longCachedCount = get_transient( "ssba_{$cache_key}" );
+    if ( false === $longCachedCount ) {
+        $longCachedCount = 0;
+    }
+
+    // if sharedcount.com is enabled
+    if ($arrSettings['sharedcount_enabled']) {
+        // request from sharedcount.com
+        $sharedcount = wp_remote_get('https://'.$arrSettings['sharedcount_plan'].'.sharedcount.com/url?url='.$urlCurrentPage.'&apikey='.$arrSettings['sharedcount_api_key'], array('timeout' => 6));
+
+        // if no error
+        if (is_wp_error($sharedcount)) {
+            return ssba_format_number( $longCachedCount );
+        }
+
+        // decode and return count
+        $shared_resp = json_decode( $sharedcount['body'], true );
+        $sharedcount = $longCachedCount;
+        if ( isset( $shared_resp['Facebook']['share_count'] ) ) {
+            $sharedcount = (int) $shared_resp['Facebook']['share_count'];
+            wp_cache_set( $cache_key, $sharedcount, 'ssba', MINUTE_IN_SECONDS * 2 );
+            set_transient( "ssba_{$cache_key}", $sharedcount, DAY_IN_SECONDS );
+        }
+        return ssba_format_number( $sharedcount );
+    } else {
+        // get results from facebook
+        $htmlFacebookShareDetails = wp_remote_get('http://graph.facebook.com/'.$urlCurrentPage, array('timeout' => 6));
+
+        // if no error
+        if (is_wp_error($htmlFacebookShareDetails)) {
+            return ssba_format_number( $longCachedCount );
+        }
+
+        // decode and return count
+        $arrFacebookShareDetails = json_decode($htmlFacebookShareDetails['body'], true);
+        $intFacebookShareCount = $longCachedCount;
+        if ( isset( $arrFacebookShareDetails['share']['share_count'] ) ) {
+            $intFacebookShareCount = (int) $arrFacebookShareDetails['share']['share_count'];
+            wp_cache_set( $cache_key, $intFacebookShareCount, 'ssba', MINUTE_IN_SECONDS * 2 );
+            set_transient( "ssba_{$cache_key}", $intFacebookShareCount, DAY_IN_SECONDS );
+        }
+        return ssba_format_number( $intFacebookShareCount );
+    }
 }
 
 // get twitter button
@@ -333,8 +394,10 @@ function ssba_twitter($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShar
 
     // if show share count is set to Y
     if ($arrSettings['ssba_show_share_count'] == 'Y' && $booShowShareCount == true) {
-
-        $htmlShareButtons .= '<span class="ssba_sharecount">' . getTwitterShareCount($urlCurrentPage) . '</span>';
+        // newsharedcount needs to be enabled
+        if ($arrSettings['twitter_newsharecounts'] == 'Y') {
+            $htmlShareButtons .= '<span class="ssba_sharecount">' . ssba_twitter_count($urlCurrentPage) . '</span>';
+        }
     }
 
     // return share buttons
@@ -342,19 +405,22 @@ function ssba_twitter($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShar
 }
 
 // get twitter share count
-function getTwitterShareCount($urlCurrentPage) {
-    // get results from twitter and return the number of shares
-    $htmlTwitterShareDetails = wp_remote_get('http://urls.api.twitter.com/1/urls/count.json?url='.$urlCurrentPage, array('timeout' => 6));
+function ssba_twitter_count($urlCurrentPage)
+{
+    // get results from newsharecounts and return the number of shares
+    $result = wp_remote_get('http://public.newsharecounts.com/count.json?url=' . $urlCurrentPage, array('timeout' => 6));
 
-    // if error
-    if (is_wp_error($htmlTwitterShareDetails)) {
+    // check there was an error
+    if (is_wp_error($result)) {
         return 0;
     }
 
-    // get and decode count
-    $arrTwitterShareDetails = json_decode($htmlTwitterShareDetails['body'], true);
-    $intTwitterShareCount =  $arrTwitterShareDetails['count'];
-    return ($intTwitterShareCount) ? ssba_format_number($intTwitterShareCount) : '0';
+    // decode data
+    $result = json_decode($result['body'], true);
+    $count = (isset($result['count']) ? $result['count'] : 0);
+
+    // return
+    return ssba_format_number($count);
 }
 
 // get google+ button
@@ -640,8 +706,10 @@ function getPinterestShareCount($urlCurrentPage) {
 // get stumbleupon button
 function ssba_stumbleupon($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShareCount) {
 
+    $url = 'http://www.stumbleupon.com/submit?url=' . $urlCurrentPage  . '&amp;title=' . $strPageTitle;
+
     // stumbleupon share link
-    $htmlShareButtons = '<a data-site="stumbleupon" class="ssba_stumbleupon_share ssba_share_link" href="http://www.stumbleupon.com/submit?url=' . $urlCurrentPage  . '&amp;title=' . $strPageTitle . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow" ' : NULL) . '>';
+    $htmlShareButtons = '<a data-site="stumbleupon" class="ssba_stumbleupon_share ssba_share_link" href="' . esc_url( $url ) . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow" ' : NULL) . '>';
 
     // if image set is not custom
     if ($arrSettings['ssba_image_set'] != 'custom') {
@@ -693,8 +761,10 @@ function ssba_email($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShareC
     // replace ampersands as needed for email link
     $emailTitle = str_replace('&', '%26', $strPageTitle);
 
+    $url = 'mailto:?subject=' . $emailTitle . '&amp;body=' . $arrSettings['ssba_email_message'] . ' ' . $urlCurrentPage;
+
     // email share link
-    $htmlShareButtons = '<a data-site="email" class="ssba_email_share" href="mailto:?subject=' . $emailTitle . '&amp;body=' . $arrSettings['ssba_email_message'] . '%20' . $urlCurrentPage  . '">';
+    $htmlShareButtons = '<a data-site="email" class="ssba_email_share" href="' . esc_url( $url ) . '">';
 
     // if image set is not custom
     if ($arrSettings['ssba_image_set'] != 'custom') {
@@ -780,23 +850,8 @@ function ssba_buffer($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShare
 
 // get tumblr button
 function ssba_tumblr($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShareCount) {
-
-    // check if http:// is included
-    if (preg_match('[http://]', $urlCurrentPage)) {
-
-        // remove http:// from URL
-        $urlCurrentPage = str_replace('http://', '', $urlCurrentPage);
-    } else if (preg_match('[https://]', $urlCurrentPage)) { // check if https:// is included
-
-            // remove http:// from URL
-            $urlCurrentPage = str_replace('https://', '', $urlCurrentPage);
-        }
-
-    // strip http:// or https:// from URL (tumblr doesn't work with this set)
-    $urlCurrentPage =  str_replace("http://", '', $urlCurrentPage);
-
     // tumblr share link
-    $htmlShareButtons = '<a data-site="tumblr" class="ssba_tumblr_share" href="http://www.tumblr.com/share/link?url=' . $urlCurrentPage . '&amp;name=' . $strPageTitle . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow" ' : NULL) . '>';
+    $htmlShareButtons = '<a data-site="tumblr" class="ssba_tumblr_share" href="http://www.tumblr.com/share/link?url=' . $urlCurrentPage . '" ' . ($arrSettings['ssba_share_new_window'] == 'Y' ? ' target="_blank" ' : NULL) . ($arrSettings['ssba_rel_nofollow'] == 'Y' ? ' rel="nofollow" ' : NULL) . '>';
 
     // if image set is not custom
     if ($arrSettings['ssba_image_set'] != 'custom') {
@@ -815,8 +870,34 @@ function ssba_tumblr($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShare
     // close href
     $htmlShareButtons .= '</a>';
 
+    // if show share count is set to Y
+    if ($arrSettings['ssba_show_share_count'] == 'Y' && $booShowShareCount == true) {
+
+        $htmlShareButtons .= '<span class="ssba_sharecount">' . getTumblrShareCount($urlCurrentPage) . '</span>';
+    }
+
     // return share buttons
     return $htmlShareButtons;
+}
+
+// get tumblr share count
+function getTumblrShareCount($urlCurrentPage)
+{
+    // get results from tumblr and return the number of shares
+    $result = wp_remote_get('http://api.tumblr.com/v2/share/stats?url=' . $urlCurrentPage, array('timeout' => 6));
+
+    // check there was an error
+    if (is_wp_error($result)) {
+        // return
+        return 0;
+    }
+
+    // decode data
+    $array = json_decode($result['body'], true);
+    $count = (isset($array['response']['note_count']) ? $array['response']['note_count'] : 0);
+
+    // return
+    return ($count) ? $count : '0';
 }
 
 // get print button
@@ -896,8 +977,34 @@ function ssba_yummly($arrSettings, $urlCurrentPage, $strPageTitle, $booShowShare
     // close href
     $htmlShareButtons .= '</a>';
 
+    // if show share count is set to Y
+    if ($arrSettings['ssba_show_share_count'] == 'Y' && $booShowShareCount == true) {
+
+        $htmlShareButtons .= '<span class="ssba_sharecount">' . getYummlyShareCount($urlCurrentPage) . '</span>';
+    }
+
     // return share buttons
     return $htmlShareButtons;
+}
+
+// get yummly share count
+function getYummlyShareCount($urlCurrentPage)
+{
+    // get results from yummly and return the number of shares
+    $result = wp_remote_get('http://www.yummly.com/services/yum-count?url=' . $urlCurrentPage, array('timeout' => 6));
+
+    // check there was an error
+    if (is_wp_error($result)) {
+        // return
+        return 0;
+    }
+
+    // decode data
+    $array = json_decode($result['body'], true);
+    $count = (isset($array['count']) ? $array['count'] : 0);
+
+    // return
+    return ($count) ? $count : '0';
 }
 
 // register shortcode [ssba] to show [ssba_hide]

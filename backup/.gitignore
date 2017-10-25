@@ -1,0 +1,5 @@
+.idea
+.ftpquota
+.htaccess
+error_log
+node_modules/

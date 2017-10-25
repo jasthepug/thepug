@@ -1,0 +1,5 @@
+// text-emphasis variant
+@include text-emphasis-variant('.text-lightest', $gray-lightest);
+
+// bg variant
+@include bg-variant('.bg-lightest', $gray-lightest);

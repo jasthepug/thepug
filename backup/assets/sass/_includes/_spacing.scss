@@ -1,0 +1,26 @@
+/**
+ * Margin's class name and margin position need to make sense to identify what kind of margin it is
+ */
+@mixin spacing($className, $spacingPosition) {
+  @for $i from 0 through 12 {
+    #{$className}-#{$i} {
+      #{$spacingPosition}: #{$i * .5}rem !important;
+    }
+  }
+}
+
+/**
+ * margin specs
+ */
+@include spacing('.mt', 'margin-top'); // top margin
+@include spacing('.mr', 'margin-right'); // right margin
+@include spacing('.mb', 'margin-bottom'); // bottom margin
+@include spacing('.ml', 'margin-left'); // left margin
+
+/**
+ * margin specs
+ */
+@include spacing('.pt', 'padding-top'); // top margin
+@include spacing('.pr', 'padding-right'); // right margin
+@include spacing('.pb', 'padding-bottom'); // bottom margin
+@include spacing('.pl', 'padding-left'); // left margin

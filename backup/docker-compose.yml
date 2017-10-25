@@ -1,0 +1,36 @@
+version: '2'
+services:
+  my-wpdb:
+    image: mariadb
+    ports:
+      - "3031:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - back
+  phpmyadmin:
+    depends_on:
+      - my-wpdb
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "3032:80"
+    environment:
+      PMA_HOST: my-wpdb
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - back
+  my-wp:
+    image: wordpress
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "3030:80"
+    links:
+      - my-wpdb:mysql
+    environment:
+      WORDPRESS_DB_PASSWORD: password
+    networks:
+      - back
+networks:
+  back:
